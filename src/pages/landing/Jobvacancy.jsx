@@ -1,9 +1,15 @@
 import axios from "axios";
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { GlobalContext } from "../../context/GlobalContext";
 
 const Jobvacancy = () => {
   const [data, setData] = useState(null);
+  const { state, handleFunction } = useContext(GlobalContext);
+
+  let { search, setSearch, setFetchStatus, filter, setFilter } = state;
+
+  let { truncate, formatRupiah, handleStatus } = handleFunction;
 
   useEffect(() => {
     axios
@@ -15,262 +21,224 @@ const Jobvacancy = () => {
       .catch((err) => console.log(err.message));
   }, []);
 
-  const handleStatus = (status) => {
-    if (status === 1) {
-      return (
-        <span className="bg-green-100 text-green-800 text-sm font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-green-200 dark:text-green-900">
-          Dibuka
-        </span>
-      );
-    } else if (status === 0) {
-      return (
-        <span className="bg-red-100 text-red-800 text-sm font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-red-200 dark:text-red-900">
-          Ditutup
-        </span>
-      );
-    }
+  const handleChangeSearch = (e) => setSearch(e.target.value);
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+
+    axios
+      .get("https://dev-example.sanbercloud.com/api/job-vacancy")
+      .then((res) => {
+        setFetchStatus(true);
+        let data = res.data.data;
+        let searchData = data.filter((res) => {
+          return Object.values(res)
+            .join(" ")
+            .toLowerCase()
+            .includes(search.toLowerCase());
+        });
+        setData([...searchData]);
+      });
+
+    setSearch("");
   };
 
-  // const truncate = (str, length) => {
-  //   if (str.length > length) {
-  //     return str.slice(0, length) + "...";
-  //   } else {
-  //     return str;
-  //   }
-  // };
+  // Fitur Filter Data
+  const handleChangeFilter = (e) => {
+    let { name, value } = e.target;
 
-  const handleSubmit = (e) => {
-    console.log(e.target.value);
+    setFilter({ ...filter, [name]: value });
   };
 
-  console.log(data);
+  const handleFilter = (e) => {
+    e.preventDefault();
+    // console.log(filter);
+
+    axios
+      .get("https://dev-example.sanbercloud.com/api/job-vacancy")
+      .then((res) => {
+        setFetchStatus(true);
+        let dataJob = res.data.data;
+        let filterData = dataJob.filter((res) => {
+          return (
+            res.company_city.toLowerCase() ===
+              filter.company_city.toLowerCase() ||
+            res.job_tenure.toLowerCase() === filter.job_tenure.toLowerCase() ||
+            res.title.toLowerCase() === filter.title.toLowerCase()
+          );
+        });
+
+        console.log(filterData);
+        setData([...filterData]);
+      });
+
+    setFilter({
+      company_city: "",
+      job_tenure: "",
+      title: "",
+    });
+  };
+
   return (
     <>
       <section id="job-vacancy" className="pt-36 pb-32 bg-white">
-        <div className="container mx-auto grid grid-cols-1 md:grid-cols-2">
+        <div className="container mx-auto">
           <div className="mb-12 px-4 py-4">
             <div className="w-full bg-white p-4 rounded-md shadow-md">
-              {/* Search Position */}
-              <form>
-                <label
-                  htmlFor="default-search"
-                  className="text-base font-semibold text-gray-900"
-                >
-                  Search
-                </label>
-                <div className="relative mt-3">
-                  <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <svg
-                      aria-hidden="true"
-                      className="w-5 h-5 text-gray-500 dark:text-gray-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      xmlns="http://www.w3.org/2000/svg"
+              <div>
+                {/* Search */}
+                <form onSubmit={handleSearch}>
+                  <div className="my-4">
+                    <label
+                      htmlFor="default-input"
+                      className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                      />
-                    </svg>
-                  </div>
-                  <input
-                    type="search"
-                    id="default-search"
-                    className="block w-full p-4 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                    placeholder="Search Position"
-                    required
-                  />
-                </div>
-              </form>
-
-              <h1 className="mt-4 text-base font-semibold">Filter</h1>
-
-              <form action="" onSubmit={handleSubmit}>
-                <div className="my-6">
-                  <label
-                    htmlFor="default-input"
-                    className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                  >
-                    City :
-                  </label>
-                  <div>
-                    <select
-                      id="countries"
-                      className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                    >
-                      <option defaultValue={""}>Choose a city</option>
-                      {data !== null &&
-                        data.map((city) => {
-                          return (
-                            <option key={city.id}>{city.company_city}</option>
-                          );
-                        })}
-                    </select>
-                  </div>
-                </div>
-                <label
-                  htmlFor="default-search"
-                  className="mb-2 text-sm font-medium text-gray-900 sr-only dark:text-white"
-                >
-                  Search Company Name
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <svg
-                      aria-hidden="true"
-                      className="w-5 h-5 text-gray-500 dark:text-gray-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                      />
-                    </svg>
-                  </div>
-                  <input
-                    type="search"
-                    id="default-search"
-                    className="block w-full p-4 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                    placeholder="Search company name"
-                    required
-                  />
-                </div>
-                <div className="my-6">
-                  <label
-                    htmlFor="default-search"
-                    className="mb-2 text-sm font-medium text-gray-900 sr-only dark:text-white mt-6"
-                  >
-                    Search Salary
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                      <svg
-                        aria-hidden="true"
-                        className="w-5 h-5 text-gray-500 dark:text-gray-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                        />
-                      </svg>
-                    </div>
+                      Search :
+                    </label>
                     <input
-                      type="search"
-                      id="default-search"
-                      className="block w-full p-4 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                      placeholder="Search Salary"
-                      required
+                      type="text"
+                      value={search}
+                      onChange={handleChangeSearch}
+                      id="default-input"
+                      className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                     />
                   </div>
-                </div>
-              </form>
-              {/* <div className="my-6">
-                <label
-                  htmlFor="default-input"
-                  className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                >
-                  Company :
-                </label>
-                <div>
-                  <label
-                    htmlFor="countries"
-                    className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                  <button
+                    type="submit"
+                    className="text-white bg-blue-700 hover:bg-blue-800 mb-10 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
                   >
-                    Select an option
-                  </label>
-                  <select
-                    id="countries"
-                    className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                    Search
+                  </button>
+                  <button
+                    type="submit"
+                    onClick={() => setFetchStatus(true)}
+                    className="text-white bg-red-500 hover:bg-red-600 mb-10 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center ml-2"
                   >
-                    <option selected>Choose a country</option>
-                    <option value="US">United States</option>
-                    <option value="CA">Canada</option>
-                    <option value="FR">France</option>
-                    <option value="DE">Germany</option>
-                  </select>
-                </div>
-              </div>
-              <div className="my-6">
-                <label
-                  htmlFor="default-input"
-                  className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                >
-                  Jenis Pekerjaan :
-                </label>
-                <div>
-                  <label
-                    htmlFor="countries"
-                    className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                  >
-                    Select an option
-                  </label>
-                  <select
-                    id="countries"
-                    className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                  >
-                    <option selected>Choose a country</option>
-                    <option value="US">United States</option>
-                    <option value="CA">Canada</option>
-                    <option value="FR">France</option>
-                    <option value="DE">Germany</option>
-                  </select>
-                </div>
-              </div> */}
+                    Reset
+                  </button>
+                </form>
 
-              <div className="flex justify-center">
-                <button
-                  type="submit"
-                  className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-base md:w-48 sm:w-auto px-5 py-2.5 text-center"
-                >
-                  Find
-                </button>
+                {/* Filter */}
+                <h1 className="mt-4 text-base font-semibold">Filter</h1>
+                <form onSubmit={handleFilter}>
+                  <div className="my-4">
+                    <label
+                      htmlFor="default-input"
+                      className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                    >
+                      City :
+                    </label>
+                    <input
+                      type="text"
+                      name="company_city"
+                      value={filter.company_city}
+                      onChange={handleChangeFilter}
+                      id="default-input"
+                      className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                    />
+                  </div>
+                  <div className="my-4">
+                    <label
+                      htmlFor="default-input"
+                      className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                    >
+                      Job Tenure :
+                    </label>
+                    <input
+                      type="text"
+                      name="job_tenure"
+                      value={filter.job_tenure}
+                      onChange={handleChangeFilter}
+                      id="default-input"
+                      className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                    />
+                  </div>
+                  <div className="my-4">
+                    <label
+                      htmlFor="default-input"
+                      className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                    >
+                      Position :
+                    </label>
+                    <input
+                      type="text"
+                      name="title"
+                      value={filter.title}
+                      onChange={handleChangeFilter}
+                      id="default-input"
+                      className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    className="text-white bg-blue-700 hover:bg-blue-800 mb-10 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+                  >
+                    Find
+                  </button>
+                </form>
               </div>
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-10 px-4 justify-center">
+          {/* List Job */}
+          <div className=" bg-white border rounded-md p-4 flex flex-wrap gap-5">
             {data !== null &&
-              data.map((res) => {
-                return (
-                  <Link
-                    // to="/read-more"
-                    key={res.id}
-                    className="flex flex-col items-center w-[500px] bg-white border rounded-lg shadow-md md:flex-row md:max-w-xl hover:bg-gray-100"
-                  >
-                    <img
-                      className="object-cover rounded-t-lg h-96 md:h-auto md:w-48 md:rounded-none md:rounded-l-lg"
-                      src={res.company_image_url}
-                      alt=""
-                    />
-                    <div className="flex flex-col justify-between p-4 leading-normal">
-                      <h5 className="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
-                        {res.company_name} ({res.job_tenure})
-                      </h5>
-                      <h5 className="text-base font-bold my-2">
-                        {res.company_city}
-                      </h5>
-                      <p className="mb-3 font-normal text-gray-700 dark:text-gray-400">
-                        {res.job_type}
+              data
+                .filter((res, index) => {
+                  return index < 3;
+                })
+                .map((data) => {
+                  return (
+                    <Link
+                      to={`/job-vacancy/${data.id}`}
+                      key={data.id}
+                      className="w-full max-w-xs p-6 overflow-hidden bg-white shadow-md rounded-xl dark:bg-gray-800 border"
+                    >
+                      <div className="flex flex-col items-center justify-between md:flex-row">
+                        <div className="flex items-center justify-start flex-grow w-full">
+                          <div className="relative block">
+                            <img
+                              alt="profil"
+                              src={data.company_image_url}
+                              className="mx-auto object-cover rounded-full h-10 w-10 "
+                            />
+                          </div>
+                          <div className="flex flex-col items-start ml-4">
+                            <span className="text-gray-700 dark:text-white font-bold">
+                              {data.company_name}
+                            </span>
+                            <span className="text-sm font-light text-gray-400 dark:text-gray-300">
+                              {data.company_city}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex-none hidden md:block ">
+                          {handleStatus(data.job_status)}
+                        </div>
+                      </div>
+                      <p className="mt-4 mb-2 text-lg text-gray-800 dark:text-white">
+                        {data.title}
                       </p>
-                      <h2>Status : {handleStatus(res.job_status)}</h2>
-                    </div>
-                  </Link>
-                );
-              })}
+
+                      <p className="text-sm font-normal text-gray-400">
+                        {truncate(data.job_description, 100)}
+                      </p>
+                      <div className="flex items-center justify-between p-2 my-6 bg-blue-100 rounded">
+                        <div className="flex items-start justify-between w-full">
+                          <p className="flex-grow w-full text-2xl text-gray-700">
+                            <span className="font-light text-gray-400 text-md">
+                              Rp
+                            </span>
+                            {formatRupiah(data.salary_min + "")}
+                          </p>
+                          <span className="flex-none px-3 py-1 text-sm text-indigo-500 border border-indigo-500 rounded-full">
+                            {data.job_tenure}
+                          </span>
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })}
           </div>
         </div>
       </section>

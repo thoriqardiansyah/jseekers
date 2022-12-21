@@ -1,179 +1,236 @@
 import axios from "axios";
-import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import Cookies from "js-cookie";
+import React, { useContext, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { GlobalContext } from "../../context/GlobalContext";
 
 const ListJob = () => {
+  const navigate = useNavigate();
   const [datas, setDatas] = useState(null);
+  const { state, handleFunction } = useContext(GlobalContext);
+
+  let {
+    search,
+    setSearch,
+    fetchStatus,
+    setFetchStatus,
+    filter,
+    setFilter,
+    setInput,
+    setCurrentId,
+  } = state;
+
+  let { truncate, handleStatus } = handleFunction;
 
   useEffect(() => {
+    if (fetchStatus === true) {
+      axios
+        .get(`https://dev-example.sanbercloud.com/api/job-vacancy`)
+        .then((res) => {
+          let data = res.data.data;
+          setDatas(data);
+        });
+      setFetchStatus(false);
+    }
+  }, [fetchStatus, setFetchStatus]);
+
+  // Fitur Search Data
+  const handleChangeSearch = (e) => setSearch(e.target.value);
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+
     axios
-      .get(`https://dev-example.sanbercloud.com/api/job-vacancy`)
+      .get("https://dev-example.sanbercloud.com/api/job-vacancy")
       .then((res) => {
-        let data = res.data.data;
-        setDatas(data);
+        setFetchStatus(true);
+        let dataJob = res.data.data;
+        let searchData = dataJob.filter((res) => {
+          return Object.values(res)
+            .join(" ")
+            .toLowerCase()
+            .includes(search.toLowerCase());
+        });
+        setDatas([...searchData]);
       });
-  }, []);
 
-  const truncate = (str, length) => {
-    if (str.length > length) {
-      return str.slice(0, length) + "...";
-    } else {
-      return str;
-    }
+    setSearch("");
   };
 
-  const handleStatus = (status) => {
-    if (status === 1) {
-      return (
-        <span className="bg-green-100 text-green-800 text-sm font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-green-200 dark:text-green-900">
-          Dibuka
-        </span>
-      );
-    } else if (status === 0) {
-      return (
-        <span className="bg-red-100 text-red-800 text-sm font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-red-200 dark:text-red-900">
-          Ditutup
-        </span>
-      );
-    }
+  // Fitur Filter Data
+  const handleChangeFilter = (e) => {
+    let { name, value } = e.target;
+
+    setFilter({ ...filter, [name]: value });
   };
 
-  console.log(datas);
+  const handleFilter = (e) => {
+    e.preventDefault();
+
+    axios
+      .get("https://dev-example.sanbercloud.com/api/job-vacancy")
+      .then((res) => {
+        setFetchStatus(true);
+        let dataJob = res.data.data;
+        let filterData = dataJob.filter((res) => {
+          return (
+            res.company_city.toLowerCase() ===
+              filter.company_city.toLowerCase() ||
+            res.job_tenure.toLowerCase() === filter.job_tenure.toLowerCase() ||
+            res.title.toLowerCase() === filter.title.toLowerCase()
+          );
+        });
+
+        setDatas([...filterData]);
+      });
+
+    setFilter({
+      company_city: "",
+      job_tenure: "",
+      title: "",
+    });
+  };
+
+  const handleDelete = (e) => {
+    let Id = e.currentTarget.value;
+    axios
+      .delete(`https://dev-example.sanbercloud.com/api/job-vacancy/${Id}`, {
+        headers: { Authorization: "Bearer " + Cookies.get("token") },
+      })
+      .then((res) => {
+        setFetchStatus(true);
+      });
+  };
+
+  // handling edit
+  const handleEdit = (e) => {
+    let Id = parseInt(e.currentTarget.value);
+    setCurrentId(Id);
+
+    axios
+      .get(`https://dev-example.sanbercloud.com/api/job-vacancy/${Id}`, {
+        headers: { Authorization: "Bearer " + Cookies.get("token") },
+      })
+      .then((res) => {
+        let data = res.data;
+        setInput({
+          title: data.title,
+          job_description: data.job_description,
+          job_qualification: data.job_qualification,
+          job_type: data.job_type,
+          job_tenure: data.job_tenure,
+          job_status: data.job_status,
+          company_name: data.company_name,
+          company_image_url: data.company_image_url,
+          company_city: data.company_city,
+          salary_min: data.salary_min,
+          salary_max: data.salary_max,
+        });
+        navigate(`/dashboard/list-job-vacancy/edit/${Id}`);
+      });
+  };
+
   return (
-    <div className="bg-white rounded-md shadow-md p-4 h-full">
-      {/* Search Input */}
-      <form>
-        <label
-          htmlFor="default-search"
-          className="text-base font-semibold text-gray-900"
-        >
-          Search
-        </label>
-        <div className="relative mt-3">
-          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-            <svg
-              aria-hidden="true"
-              className="w-5 h-5 text-gray-500 dark:text-gray-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
+    <div className="bg-white rounded-md shadow-md p-4 mx-2">
+      <div>
+        {/* Search */}
+        <form onSubmit={handleSearch}>
+          <div className="my-4">
+            <label
+              htmlFor="default-input"
+              className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
-          </div>
-          <input
-            type="search"
-            id="default-search"
-            className="block w-full p-4 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-            placeholder="Search Position"
-            required
-          />
-        </div>
-      </form>
-
-      <h1 className="mt-4 text-base font-semibold">Filter</h1>
-
-      <form action="">
-        <div className="my-6">
-          <label
-            htmlFor="default-input"
-            className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-          >
-            City :
-          </label>
-          <div>
-            <select
-              id="countries"
-              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-            >
-              <option defaultValue={""}>Choose a city</option>
-              {datas !== null &&
-                datas.map((city) => {
-                  return <option key={city.id}>{city.company_city}</option>;
-                })}
-            </select>
-          </div>
-        </div>
-        <label
-          htmlFor="default-search"
-          className="mb-2 text-sm font-medium text-gray-900 sr-only dark:text-white"
-        >
-          Search Company Name
-        </label>
-        <div className="relative">
-          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-            <svg
-              aria-hidden="true"
-              className="w-5 h-5 text-gray-500 dark:text-gray-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
-          </div>
-          <input
-            type="search"
-            id="default-search"
-            className="block w-full p-4 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-            placeholder="Search company name"
-            required
-          />
-        </div>
-        <div className="my-6">
-          <label
-            htmlFor="default-search"
-            className="mb-2 text-sm font-medium text-gray-900 sr-only dark:text-white mt-6"
-          >
-            Search Salary
-          </label>
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-              <svg
-                aria-hidden="true"
-                className="w-5 h-5 text-gray-500 dark:text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-            </div>
+              Search :
+            </label>
             <input
-              type="search"
-              id="default-search"
-              className="block w-full p-4 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-              placeholder="Search Salary"
-              required
+              type="text"
+              value={search}
+              onChange={handleChangeSearch}
+              id="default-input"
+              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
             />
           </div>
-        </div>
-      </form>
+          <button
+            type="submit"
+            className="text-white bg-blue-700 hover:bg-blue-800 mb-10 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+          >
+            Search
+          </button>
+          <button
+            type="submit"
+            onClick={() => setFetchStatus(true)}
+            className="text-white bg-red-500 hover:bg-red-600 mb-10 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center ml-2"
+          >
+            Reset
+          </button>
+        </form>
+
+        {/* Filter */}
+        <h1 className="mt-4 text-base font-semibold">Filter</h1>
+        <form onSubmit={handleFilter}>
+          <div className="my-4">
+            <label
+              htmlFor="default-input"
+              className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+            >
+              City :
+            </label>
+            <input
+              type="text"
+              name="company_city"
+              value={filter.company_city}
+              onChange={handleChangeFilter}
+              id="default-input"
+              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+            />
+          </div>
+          <div className="my-4">
+            <label
+              htmlFor="default-input"
+              className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+            >
+              Job Tenure :
+            </label>
+            <input
+              type="text"
+              name="job_tenure"
+              value={filter.job_tenure}
+              onChange={handleChangeFilter}
+              id="default-input"
+              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+            />
+          </div>
+          <div className="my-4">
+            <label
+              htmlFor="default-input"
+              className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+            >
+              Position :
+            </label>
+            <input
+              type="text"
+              name="title"
+              value={filter.title}
+              onChange={handleChangeFilter}
+              id="default-input"
+              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+            />
+          </div>
+          <button
+            type="submit"
+            className="text-white bg-blue-700 hover:bg-blue-800 mb-10 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+          >
+            Find
+          </button>
+        </form>
+      </div>
 
       {/* List table */}
-      <div className="overflow-x-scroll relative shadow-md sm:rounded-lg">
-        <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-          <thead className="text-xs text-white uppercase bg-sky-500 dark:bg-gray-700 dark:text-gray-400">
+      <div className="overflow-x-auto relative shadow-md border rounded-lg bg-white md:w-[1200px]">
+        <table className=" text-sm text-left text-gray-500  ">
+          <thead className="text-xs text-white uppercase bg-sky-500">
             <tr>
-              <th scope="col" className="py-3 px-6">
+              <th scope="col" className="py-1 px-3">
                 ID
               </th>
               <th scope="col" className="py-3 px-6">
@@ -190,6 +247,9 @@ const ListJob = () => {
               </th>
               <th scope="col" className="py-3 px-6">
                 Job Tenure
+              </th>
+              <th scope="col" className="py-3 px-6">
+                Job Status
               </th>
               <th scope="col" className="py-3 px-6">
                 Company Name
@@ -215,31 +275,34 @@ const ListJob = () => {
             {datas !== null &&
               datas.map((data, index) => {
                 return (
-                  <tr className="bg-white border-b dark:bg-gray-900 dark:border-gray-700">
+                  <tr className=" border-b" key={data.id}>
                     <th
                       scope="row"
-                      className="py-4 px-6 font-medium text-gray-900 whitespace-nowrap dark:text-white"
+                      className="py-1 px-4 font-medium text-gray-900 whitespace-nowrap dark:text-white"
                     >
                       {index + 1}
                     </th>
                     <td className="py-4 px-6">{data.title}</td>
                     <td className="py-4 px-6">
-                      {truncate(data.job_description, 20)}
+                      {truncate(data.job_description, 10)}
                     </td>
-                    <td className="py-4 px-6">{data.job_qualification}</td>
+                    <td className="py-4 px-6">
+                      {truncate(data.job_qualification, 10)}
+                    </td>
                     <td className="py-4 px-6">{data.job_type}</td>
                     <td className="py-4 px-6">{data.job_tenure}</td>
                     <td className="py-4 px-6">
                       {handleStatus(data.job_status)}
                     </td>
                     <td className="py-4 px-6">{data.company_name}</td>
-                    <td className="py-4 px-6">{data.company_image_url}</td>
-                    <td className="py-4 px-6">{data.company_city}</td>
+                    <td className="py-4 px-6">
+                      {truncate(data.company_image_url, 10)}
+                    </td>
                     <td className="py-4 px-6">{data.company_city}</td>
                     <td className="py-4 px-6">{data.salary_min}</td>
-                    <td className="py-4 px-6">{data.salary_max}</td>
-                    <td>
-                      <Link to={"/"}>
+                    <td className="py-4 px-4">{data.salary_max}</td>
+                    <td className="flex pt-4 justify-center hover:text-yellow-300">
+                      <button onClick={handleEdit} value={data.id}>
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
                           fill="none"
@@ -255,10 +318,10 @@ const ListJob = () => {
                           />
                         </svg>
                         Edit
-                      </Link>
+                      </button>
                     </td>
-                    <td>
-                      <Link to={"/"}>
+                    <td className="flex hover:text-red-500 py-4 justify-center">
+                      <button onClick={handleDelete} value={data.id}>
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
                           fill="none"
@@ -266,6 +329,7 @@ const ListJob = () => {
                           strokeWidth={1.5}
                           stroke="currentColor"
                           className="w-6 h-6"
+                          // value={data.id}
                         >
                           <path
                             strokeLinecap="round"
@@ -274,7 +338,7 @@ const ListJob = () => {
                           />
                         </svg>
                         Delete
-                      </Link>
+                      </button>
                     </td>
                   </tr>
                 );

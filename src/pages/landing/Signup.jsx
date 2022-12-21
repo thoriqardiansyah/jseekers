@@ -1,7 +1,55 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import axios from "axios";
+import Cookies from "js-cookie";
+import React, { useContext } from "react";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { GlobalContext } from "../../context/GlobalContext";
 
 const Signup = () => {
+  const { state } = useContext(GlobalContext);
+  const navigate = useNavigate();
+  let { setFetchStatus } = state;
+  const [input, setInput] = useState({
+    name: "",
+    image_url: "",
+    email: "",
+    password: "",
+  });
+
+  const handleChange = (e) => {
+    let { name, value } = e.target;
+
+    if (name === "name") {
+      setInput({ ...input, name: value });
+    } else if (name === "image") {
+      setInput({ ...input, image_url: value });
+    } else if (name === "email") {
+      setInput({ ...input, email: value });
+    } else if (name === "password") {
+      setInput({ ...input, password: value });
+    }
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    console.log(input);
+    let { name, image_url, email, password } = input;
+
+    axios
+      .post(
+        `https://dev-example.sanbercloud.com/api/register`,
+        { name, image_url, email, password },
+        { headers: { Authorization: "Bearer " + Cookies.get("token") } }
+      )
+      .then((res) => {
+        setFetchStatus(true);
+        navigate("/signin");
+      })
+      .catch((err) => {
+        alert(err.message);
+      });
+  };
   return (
     <>
       <section id="signup" className="py-28 h-screen">
@@ -19,7 +67,7 @@ const Signup = () => {
             </span>
 
             <div>
-              <form>
+              <form onSubmit={handleSubmit}>
                 <div className="mb-6">
                   <label
                     htmlFor="name"
@@ -30,9 +78,10 @@ const Signup = () => {
                   <input
                     type="text"
                     name="name"
+                    value={input.name}
+                    onChange={handleChange}
                     id="name"
                     className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                    required
                   />
                 </div>
                 <div className="mb-6">
@@ -44,10 +93,11 @@ const Signup = () => {
                   </label>
                   <input
                     type="text"
-                    name="image"
+                    name="image_url"
+                    value={input.image_url}
+                    onChange={handleChange}
                     id="image"
                     className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                    required
                   />
                 </div>
                 <div className="mb-6">
@@ -60,6 +110,8 @@ const Signup = () => {
                   <input
                     type="text"
                     name="email"
+                    value={input.email}
+                    onChange={handleChange}
                     id="email"
                     className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
                     placeholder="name@gmail.com"
@@ -76,10 +128,16 @@ const Signup = () => {
                   <input
                     type="password"
                     name="password"
+                    value={input.password}
+                    onChange={handleChange}
+                    min={8}
                     id="password"
                     className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
                     required
                   />
+                  <p className="text-sm font-thin text-gray-400">
+                    Minimal 8 Karakter
+                  </p>
                 </div>
                 <button
                   type="submit"

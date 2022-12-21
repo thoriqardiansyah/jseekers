@@ -169,7 +169,7 @@ const LayoutDashboard = (props) => {
             </div>
           </div>
           <div className="flex flex-col w-full md:space-y-4">
-            <header className="z-40 flex items-center w-full h-16 bg-white px-6 shadow-md text-xl font-semibold">
+            <header className="z-40 flex items-center justify-between w-full h-16 bg-white px-6 shadow-md text-xl font-semibold">
               Selamat Datang, {user?.name ?? "undefined"}
             </header>
             <div className="h-screen px-4 pb-24 overflow-auto md:px-6">

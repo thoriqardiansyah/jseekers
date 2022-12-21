@@ -1,6 +1,7 @@
 import Cookies from "js-cookie";
 import React from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { GlobalProvider } from "./context/GlobalContext";
 import Layout from "./components/Layout";
 import LayoutDashboard from "./components/LayoutDashboard";
 import ChangePassword from "./pages/dashboard/ChangePassword";
@@ -34,90 +35,108 @@ function App() {
   return (
     <>
       <BrowserRouter>
-        <Routes>
-          <Route
-            path="/"
-            element={
-              <Layout>
-                <Home />
-              </Layout>
-            }
-          />
-          <Route
-            path="/job-vacancy"
-            element={
-              <Layout>
-                <Jobvacancy />
-              </Layout>
-            }
-          />
-          <Route
-            path="/signin"
-            element={
-              <AuthLogin>
-                <Signin />
-              </AuthLogin>
-            }
-          />
-          <Route
-            path="/signup"
-            element={
-              <Layout>
-                <Signup />
-              </Layout>
-            }
-          />
-          <Route
-            path="/dashboard"
-            element={
-              <AuthDashboard>
+        <GlobalProvider>
+          <Routes>
+            <Route
+              path="/"
+              element={
+                <Layout>
+                  <Home />
+                </Layout>
+              }
+            />
+            <Route
+              path="/job-vacancy"
+              element={
+                <Layout>
+                  <Jobvacancy />
+                </Layout>
+              }
+            />
+            <Route
+              path="/job-vacancy/:Id"
+              element={
+                <Layout>
+                  <Detail />
+                </Layout>
+              }
+            />
+            <Route
+              path="/signin"
+              element={
+                <AuthLogin>
+                  <Signin />
+                </AuthLogin>
+              }
+            />
+            <Route
+              path="/signup"
+              element={
+                <Layout>
+                  <Signup />
+                </Layout>
+              }
+            />
+            <Route
+              path="/dashboard"
+              element={
+                <AuthDashboard>
+                  <LayoutDashboard>
+                    <Dashboard />
+                  </LayoutDashboard>
+                </AuthDashboard>
+              }
+            />
+            <Route
+              path="/dashboard/:Id"
+              element={
                 <LayoutDashboard>
-                  <Dashboard />
+                  <Detail />
                 </LayoutDashboard>
-              </AuthDashboard>
-            }
-          />
-          <Route
-            path="/dashboard/:Id"
-            element={
-              <LayoutDashboard>
-                <Detail />
-              </LayoutDashboard>
-            }
-          />
-          <Route
-            path="/dashboard/list-job-vacancy"
-            element={
-              <LayoutDashboard>
-                <ListJob />
-              </LayoutDashboard>
-            }
-          />
-          <Route
-            path="/dashboard/list-job-vacancy/form"
-            element={
-              <LayoutDashboard>
-                <DataForm />
-              </LayoutDashboard>
-            }
-          />
-          <Route
-            path="/dashboard/profile"
-            element={
-              <LayoutDashboard>
-                <Profile />
-              </LayoutDashboard>
-            }
-          />
-          <Route
-            path="/dashboard/change-password"
-            element={
-              <LayoutDashboard>
-                <ChangePassword />
-              </LayoutDashboard>
-            }
-          />
-        </Routes>
+              }
+            />
+            <Route
+              path="/dashboard/list-job-vacancy"
+              element={
+                <LayoutDashboard>
+                  <ListJob />
+                </LayoutDashboard>
+              }
+            />
+            <Route
+              path="/dashboard/list-job-vacancy/form"
+              element={
+                <LayoutDashboard>
+                  <DataForm />
+                </LayoutDashboard>
+              }
+            />
+            <Route
+              path="/dashboard/list-job-vacancy/edit/:Id"
+              element={
+                <LayoutDashboard>
+                  <DataForm />
+                </LayoutDashboard>
+              }
+            />
+            <Route
+              path="/dashboard/profile"
+              element={
+                <LayoutDashboard>
+                  <Profile />
+                </LayoutDashboard>
+              }
+            />
+            <Route
+              path="/dashboard/change-password"
+              element={
+                <LayoutDashboard>
+                  <ChangePassword />
+                </LayoutDashboard>
+              }
+            />
+          </Routes>
+        </GlobalProvider>
       </BrowserRouter>
     </>
   );
