@@ -1,3 +1,16 @@
+# Preview Website
+
+Hero
+![alt text](src/assets/demo/Hero.png)
+
+Dashboard
+![alt text](src/assets/demo/Dashboard.png)
+
+# Login
+
+Email: jane@gmail.com
+Password: 12345678
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
